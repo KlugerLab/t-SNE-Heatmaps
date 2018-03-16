@@ -11,7 +11,7 @@ Here is a screenshot of the result:
 **The interactive version is available [here](http://gauss.math.yale.edu/~gcl22/t-sne-heatmaps/Macosko_etal.html)**, and thanks to heatmaply, allows for more detailed exploration by zooming, panning, and more.
 
 ## How it works
-Linderman and Steinerberger (2017) [[2]](https://arxiv.org/abs/1706.02582) prove that t-SNE will faithfully embed well clustered data, independent of the dimension. Real life data is not well clustered, but in our experience,  2D embeddings (in particular the clusters) tend to be generally consistent with 1D embedding.  However, 1D embeddings are much more compact, and allow us to build the heatmap visualization. To build a t-SNE heatmap, we do the following: 
+Linderman and Steinerberger (2017) [[2]](https://arxiv.org/abs/1706.02582) prove that t-SNE will faithfully embed well clustered data, independent of the dimension. Real life data is not well clustered, but in our experience,  2D embeddings (in particular the clusters) tend to be generally consistent with 1D embedding.  However, 1D embeddings are much more compact, and allow us to build the heatmap visualization. To build a t-SNE heatmap, we do the following:
 
 1. Compute 1D t-SNE of the cells. With FIt-SNE [[3]](https://arxiv.org/abs/1712.09005), this can be done for millions of cells in very short amount of time.
 2. Discretize the 1D t-SNE embedding into 100 bins.
@@ -22,6 +22,6 @@ The representation of the genes by their binned expression pattern in 1D t-SNE i
 
 
 ## References
-[1] Macosko, Evan Z., et al. Highly parallel genome-wide expression profiling of individual cells using nanoliter droplets. Cell 161.5 (2015): 1202-1214.
-[2] Linderman, G. C., & Steinerberger, S. (2017). Clustering with t-SNE, Provably. arXiv:1706.02582
-[3] George C. Linderman, Manas Rachh, Jeremy G. Hoskins, Stefan Steinerberger, Yuval Kluger. (2017). Efficient Algorithms for t-distributed Stochastic Neighborhood Embedding. (2017) arXiv:1712.09005 
+1. Macosko, Evan Z., et al. Highly parallel genome-wide expression profiling of individual cells using nanoliter droplets. Cell 161.5 (2015): 1202-1214.
+2. Linderman, G. C., & Steinerberger, S. (2017). Clustering with t-SNE, Provably. arXiv:1706.02582
+3. George C. Linderman, Manas Rachh, Jeremy G. Hoskins, Stefan Steinerberger, Yuval Kluger. (2017). Efficient Algorithms for t-distributed Stochastic Neighborhood Embedding. (2017) arXiv:1712.09005
