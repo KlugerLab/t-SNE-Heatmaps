@@ -1,7 +1,14 @@
 # t-SNE Heatmaps
 
 ## Introduction
-When exploring a scRNA-seq dataset, it is common to visualize the cells with t-SNE and color them by expression of different genes that are markers for known cell types. The expression patterns of these marker genes suggest which clusters correspond to which known cell types. However, the expression of these marker genes can only be visualized one at a time, and only so many can fit on a page and compared side-by-side. We present t-SNE Heatmaps, which use 1D t-SNE to address this constraint, allowing for visualization of the expression patterns of hundreds of genes simulatneously.
+When exploring a scRNA-seq dataset, it is common to visualize the cells with
+t-SNE and color them by expression of different genes that are markers for
+known cell types. The expression patterns of these marker genes suggest which
+clusters correspond to which known cell types. However, the expression of these
+marker genes can only be visualized one at a time, and only so many can fit on
+a page and compared side-by-side. We present t-SNE Heatmaps, which use 1D t-SNE
+to address this constraint, allowing for visualization of the expression
+patterns of hundreds of genes simulatneously.
 
 ## Example
 In `1d_tsne_heatmaps_tutorial.R` we demonstrate t-SNE heatmaps using the sCNRA-seq data from Macosko et al. (2015) [[1]](http://www.cell.com/abstract/S0092-8674(15)00549-8).
@@ -20,6 +27,8 @@ Linderman and Steinerberger (2017) [[2]](https://arxiv.org/abs/1706.02582) prove
 
 The representation of the genes by their binned expression pattern in 1D t-SNE induces a distance function on the genes. In particular, we can perform hierarchical clustering on the genes using this new distance function, which often gives more meaningful results than Euclidean distance on the original data. This distance function also allows us to find genes whose expression pattern is associated with genes of interest. The user provides a list of genes of interest, and the algorithm then "enriches" this set with genes that have a similar expression pattern in the t-SNE.
 
+
+If you have any questions, please feel free to [contact](mailto:george.linderman[at]yale.edu) George Linderman. Also, if you find t-SNE Heatmaps to be useful, please cite Linderman et al. 2017 [[3]](https://arxiv.org/abs/1712.09005).
 
 ## References
 1. Macosko, Evan Z., et al. Highly parallel genome-wide expression profiling of individual cells using nanoliter droplets. Cell 161.5 (2015): 1202-1214.
