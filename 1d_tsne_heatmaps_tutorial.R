@@ -56,7 +56,7 @@ ggplot(data.frame(V1=noise_y, V2=tsne.vptrees.1d,
                             col=as.factor(A_norm["LHX1",]>0)), aes(x=V2,y=V1, color=col) ) + geom_point(size=0.05)
 
 # Make a t-SNE heatmap! -----------------------------------------------------------
-source('/data/Linderman/tsne_applications/tsnehm_experimental.R')
+source('/data/Linderman/t-SNE-Heatmaps/tsnehm_experimental.R')
 
 # Here's a list of "genes of interest" that we think might mark a specific
 # cluster. These are typically chosen by prior knowledge. Here, we pick genes
