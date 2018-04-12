@@ -16,13 +16,16 @@
 library(heatmaply)
 require(gplots)
 library(pdist)
-library(plyr)
 library(RColorBrewer)
-library(parallel)
-library(data.table)
+library(Matrix)
+library(Matrix.utils)
 
 tsnehm <- function(expression_matrix, goi, tsne_embedding, cell_labels, enrich=0, breaks=100, slope=50, intercept=0.05){
   
+  if (class(expression_matrix) != "dgCMatrix") {
+    expression_matrix <- as(expression_matrix, "dgCMatrix")
+  }
+
   nonempty_cells <- colSums(expression_matrix) > 0;
   expression_matrix <- expression_matrix[,nonempty_cells]
   tsne_embedding <- tsne_embedding[nonempty_cells]
@@ -36,65 +39,71 @@ tsnehm <- function(expression_matrix, goi, tsne_embedding, cell_labels, enrich=0
     print(sprintf("The following rows are not in the matrix: %s", paste(goi[notinrows])))
   }
   goi <- goi[!notinrows]
-  if (enrich ==0 ) {
-    goidf <- data.frame(x=tsne_embedding, t(expression_matrix[goi,]))
-  }else{
-    goidf <- data.frame(x=tsne_embedding, t(expression_matrix))
+  if (enrich == 0) {
+    expression_matrix <- expression_matrix[goi,]
   }
-  group <- split (goidf, cut(goidf$x,breaks = breaks))
-  apply_step <- mclapply(group,function(x) as.data.frame(t(as.data.frame(colSums((x[,-1])))),mc.cores = 10))
-  bin_counts <- as.data.frame(data.table::rbindlist(apply_step))
-  bin_counts_s  <- sweep(bin_counts,2,colSums(bin_counts), '/')
-  if (enrich >0 ) {
+  
+  tsne_bins <- cut(tsne_embedding, breaks = breaks)
+  bin_counts <- aggregate.Matrix(t(expression_matrix), tsne_bins)
+  empty_bins <- levels(tsne_bins)[!levels(tsne_bins)  %in% rownames(bin_counts)]
+  empty_bins_matrix <- matrix(0, nrow = length(empty_bins), ncol = ncol(bin_counts))
+  rownames(empty_bins_matrix) <- empty_bins
+  bin_counts <- rbind(bin_counts, empty_bins_matrix)
+  bin_counts <- bin_counts[levels(tsne_bins), ]
+  bin_counts_s <- t(t(bin_counts) / rowSums(t(bin_counts)))
+  
+  if (enrich > 0) {
     enriched_genes_list <- list();
     print("Now enriching")
-    pdisttest <- pdist(t(as.matrix(bin_counts_s)),indices.A = goi, indices.B=1:ncol(bin_counts_s))
-    sortedpdist <- t(apply(as.matrix(pdisttest), 1, order,decreasing=FALSE))
+    pdisttest <- pdist(t(bin_counts_s), indices.A = goi, indices.B=1:ncol(bin_counts_s))
+    sortedpdist <- t(apply(as.matrix(pdisttest), 1, order, decreasing=FALSE))
     enriched_genes <- unique(as.vector(t(sortedpdist[,1:(enrich +1)])))
     for (goii in 1:length(goi)){
-      enriched_genes_list[[goi[goii]]] <-rownames(expression_matrix)[sortedpdist[goii,2:enrich+1] ]
+      enriched_genes_list[[goi[goii]]] <- rownames(expression_matrix)[sortedpdist[goii,2:enrich+1]]
     }
     bin_counts_s <- bin_counts_s[,enriched_genes]
-    
-    
   }
   
   #assign a label to each column based on which of the cell_labels is the most common
   dbscan_tsne <- data.frame(x=tsne_embedding, y=cell_labels)
-  dbscan_group <- split (dbscan_tsne, cut(dbscan_tsne$x,breaks = breaks))
+  dbscan_group <- split(dbscan_tsne, cut(dbscan_tsne$x, breaks = breaks))
   Mode <- function(x) {
     ux <- unique(x)
     ux[which.max(tabulate(match(x, ux)))]
   }
-  group_labels <-unlist(lapply(dbscan_group, function(x) Mode(x[,2])))
+  group_labels <- unlist(lapply(dbscan_group, function(x) Mode(x[,2])))
   rownames(bin_counts_s) <- sprintf("bin:%s, label: %d", rownames(bin_counts_s), group_labels)
   group_labels[is.na(group_labels)] <- NA
-  if (enrich>0){
+  if (enrich > 0){
     gene_colors <- rep(0, length(enriched_genes));
   }else{
     gene_colors <-c();
   }
   gene_colors[colnames(bin_counts_s) %in% goi] <- 1
   
- my_palette <- colorRampPalette(c("white", "red"))(n = 1000)
- row_color_palette <- colorRampPalette(c("white", "blue"))
- col_color_palette <- colorRampPalette(brewer.pal(n = max(group_labels+1,na.rm=TRUE),"Spectral"))
- toplot <- t(as.matrix(bin_counts_s,2))
- 
- toplot2 <- 1/(1+exp(slope*intercept-slope*toplot))
+  my_palette <- colorRampPalette(c("white", "red"))(n = 1000)
+  row_color_palette <- colorRampPalette(c("white", "blue"))
+  col_color_palette <- colorRampPalette(brewer.pal(n = max(group_labels+1,na.rm=TRUE),"Spectral"))
+  toplot <- t(bin_counts_s)
+  
+  toplot2 <- 1/(1+exp(slope*intercept-slope*toplot))
   return_list <- list()
-  return_list$heatmap <- heatmaply(toplot2,col_side_colors = group_labels, row_side_colors=gene_colors, 
+  return_list$heatmap <- heatmaply(as.matrix(toplot2), col_side_colors = group_labels, row_side_colors=gene_colors, 
                                    row_side_palette=row_color_palette, showticklabels = c(FALSE,TRUE),  
-                                   col=my_palette,  dendrogram='row', titleX =FALSE, RowV=FALSE,
+                                   col=my_palette, dendrogram='row', titleX =FALSE, RowV=FALSE,
                                    show_legend=FALSE,hide_colorbar = TRUE,fontsize_row = 5,margins = c(70,50,NA,0)
   )
   if (enrich>0){
-    
-  return_list$enriched_genes <- enriched_genes_list
+    return_list$enriched_genes <- enriched_genes_list
   }
   return_list
 }
-genes_tsne_vecs <- function(expression_matrix, tsne_embedding,  breaks=100 ){
+
+genes_tsne_vecs <- function(expression_matrix, tsne_embedding, breaks=100 ){
+  
+  if (class(expression_matrix) != "dgCMatrix") {
+    expression_matrix <- as(expression_matrix, "dgCMatrix")
+  }
   
   nonempty_cells <- colSums(expression_matrix) > 0;
   expression_matrix <- expression_matrix[,nonempty_cells]
@@ -103,12 +112,15 @@ genes_tsne_vecs <- function(expression_matrix, tsne_embedding,  breaks=100 ){
   nonempty_genes <- rowSums(expression_matrix) > 0;
   expression_matrix <- expression_matrix[nonempty_genes,]
   
-  goidf <- data.frame(x=tsne_embedding, t(expression_matrix))
-  group <- split (goidf, cut(goidf$x,breaks = breaks))
-  apply_step <- mclapply(group,function(x) as.data.frame(t(as.data.frame(colSums((x[,-1])))),mc.cores = 10))
-  bin_counts <- as.data.frame(data.table::rbindlist(apply_step))
-  
-  outmat <- sweep(bin_counts,2,colSums(bin_counts), '/')
+  tsne_bins <- cut(tsne_embedding, breaks = breaks)
+  bin_counts <- aggregate.Matrix(t(expression_matrix), tsne_bins)
+  empty_bins <- levels(tsne_bins)[!levels(tsne_bins)  %in% rownames(bin_counts)]
+  empty_bins_matrix <- matrix(0, nrow = length(empty_bins), ncol = ncol(bin_counts))
+  rownames(empty_bins_matrix) <- empty_bins
+  bin_counts <- rbind(bin_counts, empty_bins_matrix)
+  bin_counts <- bin_counts[levels(tsne_bins), ]
+
+  outmat <- t(t(bin_counts) / rowSums(t(bin_counts)))
   colnames(outmat) <- rownames(expression_matrix)
   outmat
 }
