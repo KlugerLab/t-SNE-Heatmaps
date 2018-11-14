@@ -59,7 +59,7 @@ tsnehm <- function(expression_matrix, goi, tsne_embedding, cell_labels, enrich=0
     sortedpdist <- t(apply(as.matrix(pdisttest), 1, order, decreasing=FALSE))
     enriched_genes <- unique(as.vector(t(sortedpdist[,1:(enrich +1)])))
     for (goii in 1:length(goi)){
-      enriched_genes_list[[goi[goii]]] <- rownames(expression_matrix)[sortedpdist[goii,2:enrich+1]]
+      enriched_genes_list[[goi[goii]]] <- rownames(expression_matrix)[sortedpdist[goii,2:(enrich+1)]]
     }
     bin_counts_s <- bin_counts_s[,enriched_genes]
   }
@@ -93,6 +93,7 @@ tsnehm <- function(expression_matrix, goi, tsne_embedding, cell_labels, enrich=0
                                    col=my_palette, dendrogram='row', titleX =FALSE, RowV=FALSE,
                                    show_legend=FALSE,hide_colorbar = TRUE,fontsize_row = 5,margins = c(70,50,NA,0)
   )
+  return_list$matrix <- (toplot2)
   if (enrich>0){
     return_list$enriched_genes <- enriched_genes_list
   }
