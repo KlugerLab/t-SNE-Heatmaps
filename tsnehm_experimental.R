@@ -91,8 +91,9 @@ tsnehm <- function(expression_matrix, goi, tsne_embedding, cell_labels, enrich=0
   return_list$heatmap <- heatmaply(as.matrix(toplot2), col_side_colors = group_labels, row_side_colors=gene_colors, 
                                    row_side_palette=row_color_palette, showticklabels = c(FALSE,TRUE),  
                                    col=my_palette, dendrogram='row', titleX =FALSE, RowV=FALSE,
-                                   show_legend=FALSE,hide_colorbar = TRUE,fontsize_row = 5,margins = c(70,50,NA,0)
+                                   show_legend=FALSE,hide_colorbar = TRUE,fontsize_row = 7,margins = c(70,50,NA,0)
   )
+  #save(toplot2, group_labels, gene_colors,  row_color_palette,my_palette, file="temp.RData" )
   return_list$matrix <- (toplot2)
   if (enrich>0){
     return_list$enriched_genes <- enriched_genes_list
